@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>ZioonaTV App</title>
+    
+    <!-- Meta Tags & Icons -->
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        tajawal: ['Tajawal', 'sans-serif'],
+                    },
+                    colors: {
+                        glass: 'rgba(255, 255, 255, 0.1)',
+                        glassDark: 'rgba(0, 0, 0, 0.4)',
+                        accent: '#ff2e63',
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: #0f0c29;
+            background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: white;
+            padding-bottom: 90px; /* Space for Bottom Nav */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .glass-nav {
+            background: rgba(20, 20, 30, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Hide Scrollbar but keep functionality */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Liquid Animations */
+        .liquid-shape {
+            position: absolute;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 10s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -30px); }
+        }
+
+        /* Input styling */
+        .glass-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s;
+        }
+        .glass-input:focus {
+            border-color: #ff2e63;
+            background: rgba(0, 0, 0, 0.5);
+            outline: none;
+        }
+
+        /* Toast Animation */
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .toast-enter {
+            animation: slideUp 0.3s ease forwards;
+        }
+        
+        /* Nav Item Active State */
+        .nav-item.active {
+            color: #ff2e63;
+        }
+        .nav-item.active i {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="selection:bg-accent selection:text-white">
+
+    <!-- Ambient Background Shapes -->
+    <div class="liquid-shape bg-purple-600 w-64 h-64 rounded-full top-0 left-0"></div>
+    <div class="liquid-shape bg-accent w-96 h-96 rounded-full bottom-0 right-0 animation-delay-2000"></div>
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-40 px-6 py-4 flex justify-between items-center glass-nav border-none bg-transparent backdrop-blur-md">
+        <div class="flex flex-col cursor-pointer" onclick="resetHome()">
+            <h1 class="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">ZioonaTV</h1>
+            <span class="text-[10px] text-gray-400 font-light tracking-widest">PREMIUM</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSearch()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white active:scale-95 transition">
+                <i class="fas fa-search"></i>
+            </button>
+            <button onclick="toggleAdminPanel()" class="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-accent active:scale-95 transition">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Search Overlay -->
+    <div id="searchOverlay" class="fixed top-20 left-0 w-full px-6 z-30 transition-all duration-300 opacity-0 pointer-events-none -translate-y-4">
+        <div class="glass-panel rounded-2xl p-2 flex items-center">
+            <i class="fas fa-search text-gray-400 ml-3 mr-2"></i>
+            <input type="text" id="searchInput" placeholder="بحث عن فيلم..." class="bg-transparent w-full text-white placeholder-gray-500 outline-none h-10">
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 pt-24 pb-8 max-w-md md:max-w-2xl lg:max-w-5xl">
+        
+        <!-- Categories (Horizontal Scroll) -->
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar mb-8 pb-2">
+            <button onclick="filterMovies('all')" class="cat-btn glass-panel px-6 py-3 rounded-2xl whitespace-nowrap text-sm font-bold hover:bg-white/10 transition active:scale-95 border-accent border border-opacity-30">الكل</button>
+            <button onclick="filterMovies('أكشن')" class="cat-btn glass-panel px-6 py-3 rounded-2xl whitespace-nowrap text-sm font-bold hover:bg-white/10 transition active:scale-95">أكشن</button>
+            <button onclick="filterMovies('دراما')" class="cat-btn glass-panel px-6 py-3 rounded-2xl whitespace-nowrap text-sm font-bold hover:bg-white/10 transition active:scale-95">دراما</button>
+            <button onclick="filterMovies('رعب')" class="cat-btn glass-panel px-6 py-3 rounded-2xl whitespace-nowrap text-sm font-bold hover:bg-white/10 transition active:scale-95">رعب</button>
+        </div>
+
+        <div id="gridTitle" class="text-sm text-gray-400 font-bold mb-4 hidden">نتائج البحث / التصنيف</div>
+
+        <!-- Movies Grid -->
+        <div id="moviesGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Dynamic Content -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-gray-400">
+            <i class="fas fa-film text-6xl mb-4 opacity-50"></i>
+            <p id="emptyMsg">لا توجد أفلام حالياً</p>
+            <button onclick="toggleAdminPanel()" class="mt-4 text-accent text-sm underline">أضف محتوى جديد</button>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation (Functional) -->
+    <nav class="fixed bottom-0 w-full z-50 glass-nav pb-safe pt-2 px-6 shadow-2xl">
+        <div class="flex justify-around items-center max-w-md mx-auto h-16">
+            <!-- Home -->
+            <button onclick="resetHome()" class="nav-item flex flex-col items-center gap-1 text-gray-500 hover:text-white transition active text-accent">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-[10px]">الرئيسية</span>
+            </button>
+            
+            <!-- Discover / Search -->
+            <button onclick="toggleSearch()" class="nav-item flex flex-col items-center gap-1 text-gray-500 hover:text-white transition">
+                <i class="fas fa-compass text-xl"></i>
+                <span class="text-[10px]">بحث</span>
+            </button>
+            
+            <!-- Favorites -->
+            <button onclick="filterMovies('favorites')" class="nav-item flex flex-col items-center gap-1 text-gray-500 hover:text-white transition">
+                <i class="fas fa-heart text-xl"></i>
+                <span class="text-[10px]">مفضلتي</span>
+            </button>
+            
+            <!-- Profile / Admin -->
+            <button onclick="toggleAdminPanel()" class="nav-item flex flex-col items-center gap-1 text-gray-500 hover:text-white transition">
+                <i class="fas fa-user text-xl"></i>
+                <span class="text-[10px]">حسابي</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 1. Custom Dialog / Modal (Generic) -->
+    <div id="customDialog" class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-6">
+        <div class="glass-panel w-full max-w-xs rounded-3xl p-6 text-center transform transition-all scale-100">
+            <i id="dialogIcon" class="fas fa-exclamation-circle text-4xl mb-4 text-accent"></i>
+            <h3 id="dialogTitle" class="text-xl font-bold mb-2">تنبيه</h3>
+            <p id="dialogMsg" class="text-gray-300 text-sm mb-6">الرسالة هنا</p>
+            
+            <div id="dialogActions" class="flex gap-3 justify-center">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Toast Notification -->
+    <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[90] bg-gray-900/90 border border-gray-700 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl hidden flex items-center gap-3 whitespace-nowrap">
+        <i class="fas fa-check-circle text-green-500"></i>
+        <span id="toastMsg">تمت العملية بنجاح</span>
+    </div>
+
+    <!-- Admin / Upload Modal -->
+    <div id="adminModal" class="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-sm relative">
+            <!-- Login Step -->
+            <div id="loginStep" class="glass-panel p-8 rounded-3xl text-center">
+                <h2 class="text-2xl font-bold mb-6">منطقة المشرفين</h2>
+                <input type="password" id="adminPass" placeholder="كلمة المرور" class="glass-input w-full p-4 rounded-xl mb-4 text-center text-lg">
+                <button onclick="verifyAdmin()" class="w-full bg-accent text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-accent/40 transition">دخول</button>
+                <button onclick="toggleAdminPanel()" class="mt-4 text-gray-400 text-sm">إلغاء</button>
+            </div>
+
+            <!-- Upload Step -->
+            <div id="uploadStep" class="hidden glass-panel p-6 rounded-3xl h-[80vh] overflow-y-auto hide-scrollbar">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">إضافة محتوى جديد</h2>
+                    <button onclick="toggleAdminPanel()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm">&times;</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs text-gray-400 ml-2 block mb-1">اسم الفيلم</label>
+                        <input type="text" id="mTitle" class="glass-input w-full p-3 rounded-xl" placeholder="مثال: John Wick">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 ml-2 block mb-1">رابط البوستر (صورة)</label>
+                        <input type="text" id="mImage" class="glass-input w-full p-3 rounded-xl" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 ml-2 block mb-1">التصنيف</label>
+                        <select id="mCat" class="glass-input w-full p-3 rounded-xl text-gray-300">
+                            <option value="أكشن">أكشن</option>
+                            <option value="دراما">دراما</option>
+                            <option value="رعب">رعب</option>
+                            <option value="خيال">خيال علمي</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 ml-2 block mb-1">مصدر الفيديو (Iframe أو MP4)</label>
+                        <textarea id="mSource" rows="3" class="glass-input w-full p-3 rounded-xl text-sm" placeholder='ضع كود <iframe src="..."> أو رابط مباشر .mp4'></textarea>
+                        <p class="text-[10px] text-gray-500 mt-1">يدعم يوتيوب، دروب بوكس، أو سيرفرات خاصة.</p>
+                    </div>
+                    
+                    <button onclick="saveMovie()" class="w-full bg-accent text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-accent/40 transition mt-4">
+                        نشر المحتوى
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Overlay -->
+    <div id="playerOverlay" class="fixed inset-0 z-[70] bg-black hidden flex flex-col">
+        <div class="flex justify-between items-center p-4 absolute top-0 w-full z-10 bg-gradient-to-b from-black/80 to-transparent">
+            <button onclick="closePlayer()" class="text-white text-xl w-10 h-10 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <span class="font-bold text-sm tracking-wider" id="playingTitle">NOW PLAYING</span>
+            <div class="w-10"></div> <!-- Spacer -->
+        </div>
+        
+        <div class="flex-1 flex items-center justify-center bg-black w-full h-full" id="playerContainer">
+            <!-- Video/Iframe will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // --- 1. System Components (Toast & Dialog) ---
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastMsg');
+            const icon = toast.querySelector('i');
+            
+            toastText.innerText = msg;
+            icon.className = isError ? "fas fa-times-circle text-red-500" : "fas fa-check-circle text-green-500";
+            
+            toast.classList.remove('hidden');
+            toast.classList.add('toast-enter');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('toast-enter');
+            }, 3000);
+        }
+
+        function showDialog(title, msg, onConfirm = null) {
+            const dialog = document.getElementById('customDialog');
+            document.getElementById('dialogTitle').innerText = title;
+            document.getElementById('dialogMsg').innerText = msg;
+            
+            const actions = document.getElementById('dialogActions');
+            actions.innerHTML = ''; // Clear buttons
+
+            if (onConfirm) {
+                // Confirm Mode
+                const btnYes = document.createElement('button');
+                btnYes.className = 'bg-accent text-white px-6 py-2 rounded-full font-bold flex-1';
+                btnYes.innerText = 'نعم';
+                btnYes.onclick = () => {
+                    onConfirm();
+                    closeDialog();
+                };
+                
+                const btnNo = document.createElement('button');
+                btnNo.className = 'bg-white/10 text-white px-6 py-2 rounded-full font-bold flex-1 hover:bg-white/20';
+                btnNo.innerText = 'إلغاء';
+                btnNo.onclick = closeDialog;
+                
+                actions.appendChild(btnNo);
+                actions.appendChild(btnYes);
+            } else {
+                // Alert Mode
+                const btnOk = document.createElement('button');
+                btnOk.className = 'bg-white/10 text-white px-6 py-2 rounded-full font-bold w-full hover:bg-white/20';
+                btnOk.innerText = 'حسناً';
+                btnOk.onclick = closeDialog;
+                actions.appendChild(btnOk);
+            }
+            
+            dialog.classList.remove('hidden');
+        }
+
+        function closeDialog() {
+            document.getElementById('customDialog').classList.add('hidden');
+        }
+
+
+        // --- 2. State Management ---
+        let movies = JSON.parse(localStorage.getItem('zioonaMovies')) || [];
+
+        // --- 3. Render Logic ---
+        function renderGrid(filter = 'all') {
+            const grid = document.getElementById('moviesGrid');
+            const empty = document.getElementById('emptyState');
+            const emptyMsg = document.getElementById('emptyMsg');
+            const gridTitle = document.getElementById('gridTitle');
+
+            grid.innerHTML = '';
+            
+            // Handle Navigation Active State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-accent'));
+            document.querySelectorAll('.cat-btn').forEach(el => el.classList.remove('border-accent', 'border-opacity-30'));
+
+            let filtered = [];
+            
+            if (filter === 'favorites') {
+                filtered = movies.filter(m => m.isFav);
+                emptyMsg.innerText = "لا توجد أفلام في المفضلة";
+                gridTitle.innerText = "قائمة المفضلة";
+                gridTitle.classList.remove('hidden');
+                // Highlight Heart Nav
+                document.querySelectorAll('.nav-item')[2].classList.add('active', 'text-accent');
+            } else if (filter === 'all') {
+                filtered = movies;
+                emptyMsg.innerText = "لا توجد أفلام حالياً";
+                gridTitle.classList.add('hidden');
+                // Highlight Home Nav
+                document.querySelectorAll('.nav-item')[0].classList.add('active', 'text-accent');
+                document.querySelectorAll('.cat-btn')[0].classList.add('border-accent', 'border-opacity-30');
+            } else {
+                filtered = movies.filter(m => m.category === filter);
+                emptyMsg.innerText = "لا توجد أفلام في هذا القسم";
+                gridTitle.innerText = `تصنيف: ${filter}`;
+                gridTitle.classList.remove('hidden');
+                // Highlight Home Nav (since it's sub-category)
+                document.querySelectorAll('.nav-item')[0].classList.add('active', 'text-accent');
+                // Highlight Category Button logic is complex, skipping for simplicity or need manual index mapping
+            }
+
+            if (filtered.length === 0) {
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                empty.classList.add('flex');
+            } else {
+                empty.classList.add('hidden');
+                empty.classList.remove('flex');
+                grid.classList.remove('hidden');
+
+                // Sort by newest first
+                filtered.slice().reverse().forEach(movie => {
+                    const el = document.createElement('div');
+                    el.className = 'relative group animate-fade-in';
+                    
+                    const favClass = movie.isFav ? 'text-accent' : 'text-white/50';
+
+                    el.innerHTML = `
+                        <div onclick="playMovie('${movie.id}')" class="movie-poster aspect-[2/3] rounded-2xl overflow-hidden glass-panel cursor-pointer relative shadow-lg">
+                            <img src="${movie.image}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/300x450/000000/ffffff?text=No+Image'">
+                            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
+                            <div class="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/90 to-transparent pt-10">
+                                <h3 class="text-white font-bold text-sm truncate text-right">${movie.title}</h3>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span class="text-[10px] text-gray-300 bg-white/20 px-2 py-0.5 rounded-md backdrop-blur-sm">${movie.category}</span>
+                                    <i class="fas fa-play-circle text-accent text-lg shadow-lg rounded-full bg-white/10"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="absolute top-2 right-2 flex gap-2 z-10">
+                            <button onclick="toggleFavorite(${movie.id}, event)" class="w-8 h-8 rounded-full glass-panel flex items-center justify-center ${favClass} hover:scale-110 transition active:scale-95">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+
+                        <button onclick="deleteMovie(${movie.id}, event)" class="absolute top-2 left-2 bg-red-600/80 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition admin-only shadow-lg">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    grid.appendChild(el);
+                });
+            }
+            checkAdminView();
+        }
+
+        // --- 4. Logic & Handlers ---
+        
+        function resetHome() {
+            window.scrollTo({top:0, behavior:'smooth'});
+            filterMovies('all');
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchOverlay').classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+        }
+
+        function toggleFavorite(id, e) {
+            e.stopPropagation();
+            const movieIndex = movies.findIndex(m => m.id == id);
+            if(movieIndex > -1) {
+                movies[movieIndex].isFav = !movies[movieIndex].isFav;
+                localStorage.setItem('zioonaMovies', JSON.stringify(movies));
+                
+                // Show feedback
+                const msg = movies[movieIndex].isFav ? 'تمت الإضافة للمفضلة' : 'تم الحذف من المفضلة';
+                showToast(msg);
+                
+                // Re-render keeping current view
+                // Determine current filter context to know if we need to refresh list
+                // For simplicity, just re-render current view or full grid
+                // Find current active filter?
+                const isFavView = document.getElementById('gridTitle').innerText.includes('المفضلة');
+                if(isFavView) {
+                    renderGrid('favorites');
+                } else {
+                    renderGrid('all'); // Or keep current category. 
+                    // To keep it simple, we just re-render 'all' or logic could be improved.
+                    // Let's just update the button class in DOM without full re-render for performance? 
+                    // No, simpler to re-render.
+                }
+            }
+        }
+
+        // --- 5. Admin & Auth ---
+        let isAdmin = false;
+
+        function toggleAdminPanel() {
+            const modal = document.getElementById('adminModal');
+            const login = document.getElementById('loginStep');
+            const upload = document.getElementById('uploadStep');
+            
+            // Set Nav Active
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-accent'));
+            document.querySelectorAll('.nav-item')[3].classList.add('active', 'text-accent');
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                if (isAdmin) {
+                    login.classList.add('hidden');
+                    upload.classList.remove('hidden');
+                } else {
+                    login.classList.remove('hidden');
+                    upload.classList.add('hidden');
+                }
+            } else {
+                modal.classList.add('hidden');
+                document.getElementById('adminPass').value = '';
+                // Reset nav to home if cancelled? No, keep it.
+            }
+        }
+
+        function verifyAdmin() {
+            const pass = document.getElementById('adminPass').value;
+            if (pass === 'alikuka') {
+                isAdmin = true;
+                document.getElementById('loginStep').classList.add('hidden');
+                document.getElementById('uploadStep').classList.remove('hidden');
+                checkAdminView(); 
+                showToast('أهلاً بك أيها المشرف');
+            } else {
+                showDialog('خطأ', 'كلمة المرور غير صحيحة');
+            }
+        }
+
+        function checkAdminView() {
+            const btns = document.querySelectorAll('.admin-only');
+            btns.forEach(b => b.style.display = isAdmin ? 'flex' : 'none');
+        }
+
+        function saveMovie() {
+            const title = document.getElementById('mTitle').value;
+            const image = document.getElementById('mImage').value;
+            const cat = document.getElementById('mCat').value;
+            const source = document.getElementById('mSource').value;
+
+            if (!title || !source) {
+                showDialog('تنبيه', 'يرجى ملء البيانات الأساسية (الاسم والمصدر)');
+                return;
+            }
+
+            const newMovie = {
+                id: Date.now(),
+                title,
+                image: image || 'https://via.placeholder.com/300x450',
+                category: cat,
+                source,
+                isFav: false
+            };
+
+            movies.push(newMovie);
+            localStorage.setItem('zioonaMovies', JSON.stringify(movies));
+            
+            // Reset & Close
+            document.getElementById('mTitle').value = '';
+            document.getElementById('mImage').value = '';
+            document.getElementById('mSource').value = '';
+            
+            toggleAdminPanel(); // Close modal
+            showToast('تم نشر الفيلم بنجاح');
+            renderGrid();
+        }
+
+        function deleteMovie(id, e) {
+            e.stopPropagation();
+            // Custom Confirm Dialog
+            showDialog('حذف الفيلم', 'هل أنت متأكد من حذف هذا الفيلم نهائياً؟', () => {
+                movies = movies.filter(m => m.id !== id);
+                localStorage.setItem('zioonaMovies', JSON.stringify(movies));
+                renderGrid();
+                showToast('تم الحذف بنجاح');
+            });
+        }
+
+        // --- 6. Player Logic ---
+        function playMovie(id) {
+            const movie = movies.find(m => m.id == id);
+            if (!movie) return;
+
+            const player = document.getElementById('playerOverlay');
+            const container = document.getElementById('playerContainer');
+            const title = document.getElementById('playingTitle');
+            
+            player.classList.remove('hidden');
+            title.innerText = movie.title;
+            
+            let src = movie.source.trim();
+            let htmlContent = '';
+
+            if (src.startsWith('<iframe')) {
+                htmlContent = src.replace('<iframe', '<iframe class="w-full h-full border-none" allow="autoplay; fullscreen"');
+            } else if (src.includes('dropbox.com')) {
+                src = src.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '');
+                htmlContent = `<video controls autoplay class="w-full max-h-screen"><source src="${src}" type="video/mp4"></video>`;
+            } else if (src.match(/\.(mp4|webm|ogg)$/i)) {
+                htmlContent = `<video controls autoplay class="w-full max-h-screen"><source src="${src}"></video>`;
+            } else {
+                if(src.includes('youtube') || src.includes('youtu.be')) {
+                    if(!src.includes('embed')) {
+                       const vId = src.split('v=')[1] || src.split('/').pop();
+                       src = `https://www.youtube.com/embed/${vId}?autoplay=1`;
+                    }
+                }
+                htmlContent = `<iframe src="${src}" class="w-full h-full border-none" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+            }
+
+            container.innerHTML = htmlContent;
+        }
+
+        function closePlayer() {
+            document.getElementById('playerOverlay').classList.add('hidden');
+            document.getElementById('playerContainer').innerHTML = ''; 
+        }
+
+        // --- 7. UI Helpers ---
+        function toggleSearch() {
+            const bar = document.getElementById('searchOverlay');
+            
+            // Set Nav Active
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-accent'));
+            document.querySelectorAll('.nav-item')[1].classList.add('active', 'text-accent');
+
+            if (bar.classList.contains('opacity-0')) {
+                bar.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
+                document.getElementById('searchInput').focus();
+            } else {
+                bar.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const grid = document.getElementById('moviesGrid');
+            const empty = document.getElementById('emptyState');
+
+            const filtered = movies.filter(m => m.title.toLowerCase().includes(val));
+            
+            if(filtered.length === 0) {
+                 grid.classList.add('hidden');
+                 empty.classList.remove('hidden');
+                 empty.classList.add('flex');
+                 document.getElementById('emptyMsg').innerText = "لا توجد نتائج مطابقة";
+                 return;
+            }
+
+            empty.classList.add('hidden');
+            grid.classList.remove('hidden');
+            grid.innerHTML = '';
+
+            filtered.forEach(movie => {
+                 const favClass = movie.isFav ? 'text-accent' : 'text-white/50';
+                 const el = document.createElement('div');
+                    el.className = 'relative group';
+                    el.innerHTML = `
+                        <div onclick="playMovie('${movie.id}')" class="movie-poster aspect-[2/3] rounded-2xl overflow-hidden glass-panel cursor-pointer relative">
+                            <img src="${movie.image}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/20"></div>
+                            <div class="absolute bottom-0 left-0 w-full p-3 bg-gradient-to-t from-black/90 to-transparent pt-10">
+                                <h3 class="text-white font-bold text-sm truncate text-right">${movie.title}</h3>
+                            </div>
+                        </div>
+                        <div class="absolute top-2 right-2 flex gap-2 z-10">
+                            <button onclick="toggleFavorite(${movie.id}, event)" class="w-8 h-8 rounded-full glass-panel flex items-center justify-center ${favClass} hover:scale-110 transition active:scale-95">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+                    `;
+                    grid.appendChild(el);
+            });
+        });
+
+        function filterMovies(cat) {
+            renderGrid(cat);
+        }
+
+        // --- Init ---
+        renderGrid();
+
+    </script>
+</body>
+</html>
